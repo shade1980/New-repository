@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة كرم | Karam SaaS Ecosystem</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Premium Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts - Cairo for Premium Arabic Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brandDark: '#0b0f19',
+                        brandCardDark: '#151c2c',
+                        brandBorderDark: '#222f47',
+                        brandGold: '#f59e0b',
+                        brandBlue: '#2563eb',
+                        brandBlueHover: '#1d4ed8'
+                    },
+                    fontFamily: {
+                        sans: ['Cairo', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Cairo', 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        /* Custom scrollbar to match the premium dark theme */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.05);
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.5);
+            border-radius: 9999px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #222f47;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-brandDark dark:text-slate-100 min-h-screen pb-24 transition-colors duration-300">
+
+    <!-- Custom Simulated Notification Toasts -->
+    <div id="toastContainer" class="fixed top-4 left-4 right-4 md:left-auto md:right-4 z-50 space-y-2 pointer-events-none max-w-sm"></div>
+
+    <!-- Navigation Top Bar -->
+    <header class="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-brandCardDark/80 border-b border-slate-200 dark:border-brandBorderDark px-4 py-3 transition-colors duration-300">
+        <div class="max-w-md mx-auto flex justify-between items-center">
+            <!-- Left Header: Branding and Current User Info -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-brandGold to-amber-500 text-white flex items-center justify-center font-bold text-lg shadow-lg shadow-amber-500/20 transform hover:scale-105 transition-transform">
+                    AR
+                </div>
+                <div>
+                    <h1 class="font-bold text-sm leading-tight text-slate-800 dark:text-white" id="headerUserName">قرية القلوع</h1>
+                    <div class="flex items-center gap-1.5 mt-0.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <p class="text-[10px] text-slate-500 dark:text-gray-400">المحرك متصل ومفعل</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Header: Status, Bells, Theme Toggle -->
+            <div class="flex items-center gap-3">
+                <!-- Theme Toggle Button -->
+                <button onclick="toggleTheme()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-brandBorderDark flex items-center justify-center text-slate-600 dark:text-brandGold hover:scale-105 transition-all" title="تغيير المظهر">
+                    <i id="themeIcon" class="fas fa-moon text-lg"></i>
+                </button>
+                
+                <!-- Expiry Alert Badge with WhatsApp Icon -->
+                <div class="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-semibold px-2.5 py-1.5 rounded-xl flex items-center gap-1 shadow-sm">
+                    <i class="fab fa-whatsapp text-sm text-red-500 animate-bounce"></i>
+                    <span>1 أيام متبقية</span>
+                </div>
+
+                <!-- Notifications -->
+                <button onclick="showSimulatedNotification('إشعار', 'لا توجد إشعارات جديدة حالياً.', 'info')" class="text-slate-600 dark:text-slate-300 hover:text-brandBlue transition-colors relative">
+                    <i class="far fa-bell text-xl"></i>
+                    <span class="absolute -top-1 -right-1 w-2 h-2 bg-brandBlue rounded-full"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Scrollable App Container -->
+    <main class="px-4 py-5 max-w-md mx-auto space-y-6">
+
+        <!-- TAB 1: Dashboard Home -->
+        <div id="tabHome" class="tab-content space-y-5">
+            <!-- Header title -->
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold flex items-center gap-2">
+                    <i class="fas fa-chart-pie text-brandBlue"></i>
+                    الفيسبوك والانستغرام
+                </h2>
+                <span class="text-xs text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-brandBorderDark px-2 py-1 rounded-md">لوحة التحكم السريعة</span>
+            </div>
+
+            <!-- Platform Selector Tabs (Facebook / Instagram toggle) -->
+            <div class="grid grid-cols-2 p-1 bg-slate-200/60 dark:bg-brandCardDark border border-slate-200 dark:border-brandBorderDark rounded-2xl">
+                <button id="platformFbBtn" onclick="switchPlatform('fb')" class="py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all bg-brandBlue text-white shadow-md shadow-blue-500/20">
+                    <i class="fab fa-facebook text-base"></i> فيسبوك
+                </button>
+                <button id="platformIgBtn" onclick="switchPlatform('ig')" class="py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white">
+                    <i class="fab fa-instagram text-base"></i> انستغرام
+                </button>
+            </div>
+
+            <!-- Stats Card (Subscriber Count & Page Metrics) -->
+            <div class="bg-gradient-to-br from-brandCardDark to-slate-900 text-white rounded-3xl p-5 border border-brandBorderDark relative overflow-hidden shadow-xl shadow-slate-950/20">
+                <div class="absolute -top-10 -left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
+                <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
+                
+                <div class="relative flex justify-between items-center border-b border-brandBorderDark pb-4 mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
+                            <i class="fas fa-users-cog text-lg animate-pulse"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-400 uppercase tracking-wider">مشتركي البوت</p>
+                            <h3 class="text-2xl font-black text-white mt-0.5" id="botSubscribersCount">3</h3>
+                        </div>
+                    </div>
+                    <div class="h-8 w-[1px] bg-brandBorderDark"></div>
+                    <div class="flex items-center gap-2 text-right">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+                            <i class="fas fa-fire text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-400 uppercase tracking-wider">متابعو الصفحة</p>
+                            <h3 class="text-2xl font-black text-amber-400 mt-0.5" id="followersCount">43.6K</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page connection state helper -->
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-400"><i class="fas fa-link mr-1"></i> الصفحة المربوطة:</span>
+                    <span class="font-semibold text-brandGold" id="connectedPageName">صفحة قرية القلوع الرسمية</span>
+                </div>
+            </div>
+
+            <!-- Modular 12 Actions Grid -->
+            <div class="grid grid-cols-2 gap-3.5" id="modulesGrid">
+                <!-- Module 1: Analytics -->
+                <button onclick="showModuleDetails('التحليلات')" class="bg-white dark:bg-brandCardDark hover:bg-slate-100 dark:hover:bg-brandBorderDark border border-slate-200 dark:border-brandBorderDark/60 p-3.5 rounded-2xl flex items-center gap-3 transition-all text-right shadow-sm active:scale-95 group">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fas fa-chart-line text-base"></i></div>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">التحليلات</span>
+                </button>
+                <!-- Module 2: Posts -->
+                <button onclick="showModuleDetails('المنشورات')" class="bg-white dark:bg-brandCardDark hover:bg-slate-100 dark:hover:bg-brandBorderDark border border-slate-200 dark:border-brandBorderDark/60 p-3.5 rounded-2xl flex items-center gap-3 transition-all text-right shadow-sm active:scale-95 group">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform"><i class="far fa-file-alt text-base"></i></div>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">المنشورات</span>
+                </button>
+                <!-- Module 3: Page Stories -->
+                <button onclick="showModuleDetails('قصص الصفحة')" class="bg-white dark:bg-brandCardDark hover:bg-slate-100 dark:hover:bg-brandBorderDark border border-slate-200 dark:border-brandBorderDark/60 p-3.5 rounded-2xl flex items-center gap-3 transition-all text-right shadow-sm active:scale-95 group">
+                    <div class="w-9 h-9 rounded-xl bg-pink-500/10 text-pink-500 dark:text-pink-400 flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fas fa-circle-notch text-base"></i></div>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">قصص الصفحة</span>
+                </button>
+                <!-- Module 4: Auto Responder -->
+                <button onclick="goToTab('tabBot')" class="bg-white dark:bg-brandCardDark hover:bg-slate-100 dark:hover:bg-brandBorderDark border border-slate-200 dark:border-brandBorderDark/60 p-3.5 rounded-2xl flex items-center gap-3 transition-all text-right shadow-sm active:scale-95 group">
+                    <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fab fa-facebook-messenger text-base"></i></div>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">الرد الكامل</span>
+                </button>
+                <!-- Module 5: Scheduled Posts -->
+                <button onclick="goToTab('tabScheduler')" class="bg-white dark:bg-brandCardDark hover:bg-slate-100 dark:hover:bg-brandBorderDark border border-slate-200 dark:border-brandBorderDark/60 p-3.5 rounded-2xl flex items-center gap-3 transition-all text-right shadow-sm active:scale-95 group">
+                    <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-500 dark:text-purple-400 flex items-center justify-center group-hover:scale-110 transition-transform"><i class="far fa-calendar-alt text-base"></i></div>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">منشورات مجدولة</span>
+                </button>
+                <!-- Module 6: Template Manager -->
+                <button onclick="showModuleDetails('قوالب الرد')" class="bg-white dark:bg-brandCardDark hover:bg-slate-100 dark:hover:bg-brandBorderDark border border-slate-200 dark:border-brandBorderDark/60 p-3.5 rounded-2xl flex items-center gap-3 transition-all text-right shadow-sm active:scale-95 group">
+                    <div class="w-9 h-9 rounded-xl bg-yellow-500/10 text-yellow-500 dark:text-yellow-400 flex items-center justify-center group-hover:scale-110 transition-transform"><i class="far fa-copy text-base"></i></div>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">قوالب الرد</span>
+                </button>
+                <!-- Module 7: Evaluation Reports -->
+                <button onclick="showModuleDetails('تقارير التقييم')" class="bg-white dark:bg-brandCardDark hover:bg-slate-100 dark:hover:bg-brandBorderDark border border-slate-200 dark:border-brandBorderDark/60 p-3.5 rounded-2xl flex items-center gap-3 transition-all text-right shadow-sm active:scale-95 group">
+                    <div class="w-9 h-9 rounded-xl bg-red-500/10 text-red-500 dark:text-red-400 flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fas fa-chart-bar text-base"></i></div>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">تقارير التقييم</span>
+                </button>
+                <!-- Module 8: Page Messages -->
+                <button onclick="showModuleDetails('رسائل الصفحة')" class="bg-white dark:bg-brandCardDark hover:bg-slate-100 dark:hover:bg-brandBorderDark border border-slate-200 dark:border-brandBorderDark/60 p-3.5 rounded-2xl flex items-center gap-3 transition-all text-right shadow-sm active:scale-95 group">
+                    <div class="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-500 dark:text-teal-400 flex items-center justify-center group-hover:scale-110 transition-transform"><i class="far fa-comments text-base"></i></div>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">رسائل الصفحة</span>
+                </button>
+                <!-- Module 9: Messenger Works -->
+                <button onclick="showModuleDetails('أعمالي من ماسنجر')" class="bg-white dark:bg-brandCardDark hover:bg-slate-100 dark:hover:bg-brandBorderDark border border-slate-200 dark:border-brandBorderDark/60 p-3.5 rounded-2xl flex items-center gap-3 transition-all text-right shadow-sm active:scale-95 group">
+                    <div class="w-9 h-9 rounded-xl bg-violet-500/10 text-violet-500 dark:text-violet-400 flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fas fa-th text-base"></i></div>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">أعمالي من ماسنجر</span>
+                </button>
+                <!-- Module 10: Sponsored Ads -->
+                <button onclick="showModuleDetails('إعلانات ممولة')" class="bg-white dark:bg-brandCardDark hover:bg-slate-100 dark:hover:bg-brandBorderDark border border-slate-200 dark:border-brandBorderDark/60 p-3.5 rounded-2xl flex items-center gap-3 transition-all text-right shadow-sm active:scale-95 group">
+                    <div class="w-9 h-9 rounded-xl bg-orange-500/10 text-orange-500 dark:text-orange-400 flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fas fa-ad text-base"></i></div>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">إعلانات ممولة</span>
+                </button>
+                <!-- Module 11: Bulk Messenger -->
+                <button onclick="showModuleDetails('مراسلة العملاء')" class="col-span-2 bg-white dark:bg-brandCardDark hover:bg-slate-100 dark:hover:bg-brandBorderDark border border-slate-200 dark:border-brandBorderDark/60 p-3.5 rounded-2xl flex items-center gap-3 transition-all text-right shadow-sm active:scale-95 group">
+                    <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fas fa-paper-plane text-base"></i></div>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">مراسلة العملاء (إرسال جماعي)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- TAB 2: Post Scheduler -->
+        <div id="tabScheduler" class="tab-content hidden space-y-5">
+            <h2 class="text-lg font-bold flex items-center gap-2">
+                <i class="far fa-calendar-alt text-purple-500"></i>
+                منشورات فيسبوك المجدولة والتي تم نشرها
+            </h2>
+
+            <!-- Counter Cards (Pending vs Published) -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-purple-500/10 dark:bg-purple-950/20 border border-purple-500/20 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+                    <div class="w-10 h-10 rounded-xl bg-purple-500 text-white flex items-center justify-center shadow-lg shadow-purple-500/20">
+                        <i class="far fa-calendar-alt text-lg"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 uppercase">مجدولة</p>
+                        <p class="font-extrabold text-2xl text-purple-600 dark:text-purple-400 mt-0.5" id="statsPendingCount">0</p>
+                    </div>
+                </div>
+                <div class="bg-emerald-500/10 dark:bg-emerald-950/20 border border-emerald-500/20 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                        <i class="fas fa-check-double text-lg"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 uppercase">تم نشرها</p>
+                        <p class="font-extrabold text-2xl text-emerald-600 dark:text-emerald-400 mt-0.5" id="statsPublishedCount">128</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule a New Post Form -->
+            <div class="bg-white dark:bg-brandCardDark border border-slate-200 dark:border-brandBorderDark rounded-2xl p-5 shadow-sm space-y-4">
+                <h3 class="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-1.5"><i class="fas fa-plus-circle text-brandBlue"></i> تجهيز منشور جديد للجدولة</h3>
+                
+                <div>
+                    <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1.5">محتوى المنشور (البوست)</label>
+                    <textarea id="postContentInput" rows="3" class="w-full bg-slate-50 dark:bg-brandDark border border-slate-200 dark:border-brandBorderDark rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue dark:text-white" placeholder="اكتب هنا محتوى المنشور الجاهز للنشر التلقائي..."></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1.5">وقت وتاريخ النشر</label>
+                        <input type="datetime-local" id="postTimeInput" class="w-full bg-slate-50 dark:bg-brandDark border border-slate-200 dark:border-brandBorderDark rounded-xl p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-brandBlue dark:text-white text-right" style="direction: rtl;">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1.5">استهداف الصفحة</label>
+                        <select class="w-full bg-slate-50 dark:bg-brandDark border border-slate-200 dark:border-brandBorderDark rounded-xl p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-brandBlue dark:text-white">
+                            <option>صفحة قرية القلوع</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button onclick="scheduleNewPost()" class="w-full py-3 bg-brandBlue hover:bg-brandBlueHover text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-blue-500/10 active:scale-95 flex items-center justify-center gap-2">
+                    <i class="far fa-clock"></i> جدولة المنشور الآن
+                </button>
+            </div>
+
+            <!-- List of Scheduled Posts with countdowns -->
+            <div class="space-y-3">
+                <h3 class="font-bold text-sm text-slate-500 dark:text-slate-400">قائمة المنشورات المجدولة الحالية</h3>
+                <div class="space-y-2.5" id="scheduledPostsContainer">
+                    <!-- Placeholder when no posts are scheduled -->
+                    <div class="bg-slate-100 dark:bg-brandCardDark/40 p-5 rounded-2xl text-center border border-dashed border-slate-300 dark:border-brandBorderDark" id="noPostsPlaceholder">
+                        <i class="far fa-calendar-times text-slate-400 text-2xl mb-2"></i>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">لا توجد أي منشورات مجدولة حالياً</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: Bot Settings -->
+        <div id="tabBot" class="tab-content hidden space-y-5">
+            <h2 class="text-lg font-bold flex items-center gap-2">
+                <i class="fas fa-robot text-emerald-500"></i>
+                إعدادات البوت والرد التلقائي
+            </h2>
+
+            <!-- Bot Config Card -->
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Auto Comment Module -->
+                <div class="bg-white dark:bg-brandCardDark p-4 rounded-3xl shadow-sm text-center border border-slate-200 dark:border-brandBorderDark flex flex-col items-center justify-center">
+                    <div class="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-2 shadow-sm">
+                        <i class="fas fa-comment-dots text-xl"></i>
+                    </div>
+                    <h3 class="font-extrabold text-sm text-slate-800 dark:text-white mb-1">التعليق الذهبي</h3>
+                    
+                    <!-- Toggle Switch -->
+                    <label class="relative inline-flex items-center cursor-pointer mt-2.5">
+                        <input type="checkbox" id="commentToggle" onchange="toggleBotConfig('comment')" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 dark:bg-brandBorderDark rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                    <p class="text-[10px] mt-2.5 text-slate-500 dark:text-slate-400" id="commentStatusText">غير نشط</p>
+                </div>
+                
+                <!-- Auto Like Module -->
+                <div class="bg-white dark:bg-brandCardDark p-4 rounded-3xl shadow-sm text-center border border-slate-200 dark:border-brandBorderDark flex flex-col items-center justify-center">
+                    <div class="w-11 h-11 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mb-2 shadow-sm">
+                        <i class="fas fa-heart text-xl"></i>
+                    </div>
+                    <h3 class="font-extrabold text-sm text-slate-800 dark:text-white mb-1">اللايك الذهبي</h3>
+                    
+                    <!-- Toggle Switch -->
+                    <label class="relative inline-flex items-center cursor-pointer mt-2.5">
+                        <input type="checkbox" id="likeToggle" onchange="toggleBotConfig('like')" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 dark:bg-brandBorderDark rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+                    </label>
+                    <p class="text-[10px] mt-2.5 text-slate-500 dark:text-slate-400" id="likeStatusText">غير نشط</p>
+                </div>
+            </div>
+
+            <!-- Response Templates Editor -->
+            <div class="bg-white dark:bg-brandCardDark border border-slate-200 dark:border-brandBorderDark rounded-2xl p-5 shadow-sm space-y-4">
+                <h3 class="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-1.5"><i class="fas fa-sliders-h text-emerald-500"></i> تعديل قوالب الرد الذكية</h3>
+                
+                <div>
+                    <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">الرد العام على التعليق أسفل البوست</label>
+                    <p class="text-[10px] text-brandBlue mb-1.5 font-bold">تلميح: استخدم الكود {name} لذكر اسم المتابع تلقائياً.</p>
+                    <input type="text" id="commentReplyTemplateInput" class="w-full bg-slate-50 dark:bg-brandDark border border-slate-200 dark:border-brandBorderDark rounded-xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-brandBlue dark:text-white" value="أهلاً بك يا {name} ✨ تم إرسال كافة التفاصيل لبريدك الخاص 📤.">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">الرسالة الخاصة المرسلة في الماسنجر</label>
+                    <p class="text-[10px] text-brandBlue mb-1.5 font-bold">تلميح: يمكنك استخدام الرموز التعبيرية لزيادة التفاعل.</p>
+                    <textarea id="messengerReplyTemplateInput" rows="3" class="w-full bg-slate-50 dark:bg-brandDark border border-slate-200 dark:border-brandBorderDark rounded-xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-brandBlue dark:text-white">أهلاً يا غالي {name} 👋 بناءً على تعليقك الكريم، إليك كافة التفاصيل والأسعار 📊. تواصل معنا لأي استفسار 🌹</textarea>
+                </div>
+
+                <button onclick="saveBotTemplates()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fas fa-save"></i> حفظ القوالب المعدلة
+                </button>
+            </div>
+        </div>
+
+        <!-- TAB 4: WhatsApp OTP Activation & Security -->
+        <div id="tabVerification" class="tab-content hidden space-y-5">
+            <h2 class="text-lg font-bold flex items-center gap-2">
+                <i class="fas fa-shield-alt text-emerald-500"></i>
+                الإعدادات الأمنية والتحقق عبر الواتساب
+            </h2>
+
+            <!-- Verification Status Card -->
+            <div id="activationStateCard" class="bg-gradient-to-r from-red-500 to-amber-600 rounded-3xl p-5 shadow-lg text-white flex justify-between items-center relative overflow-hidden transition-all duration-500">
+                <div class="absolute -top-10 -right-10 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-bold text-base">التحقق بخطوتين والتوثيق</h3>
+                        <span id="verificationBadge" class="bg-white/20 text-[10px] px-2.5 py-0.5 rounded-full font-bold">غير موثق</span>
+                    </div>
+                    <p class="text-xs opacity-90 mt-1.5"><i class="fas fa-fingerprint mr-1"></i> تفعيل رمز PIN وبصمة الوجه</p>
+                </div>
+                <i class="fas fa-shield-halved text-4xl opacity-40"></i>
+            </div>
+
+            <!-- WhatsApp OTP Simulator UI -->
+            <div class="bg-white dark:bg-brandCardDark border border-slate-200 dark:border-brandBorderDark rounded-2xl p-5 shadow-sm space-y-4">
+                <h3 class="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-1.5">
+                    <i class="fab fa-whatsapp text-emerald-500 text-lg"></i>
+                    تفعيل رقم الواتساب بالمنصة
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    لحماية حسابك ومزامنة إشعارات التوزيع والردود، يرجى تفعيل حسابك عن طريق إرسال كود التحقق (OTP) المؤقت إلى هاتفك المحمول.
+                </p>
+
+                <!-- Phone input step -->
+                <div id="otpStepPhone" class="space-y-3">
+                    <div>
+                        <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1.5">رقم الهاتف الدولي (واتساب)</label>
+                        <div class="relative">
+                            <input type="tel" id="userPhoneNumber" class="w-full bg-slate-50 dark:bg-brandDark border border-slate-200 dark:border-brandBorderDark rounded-xl py-3 pr-10 pl-3 text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue dark:text-white font-mono text-left" placeholder="+963 933 123 456" style="direction: ltr;">
+                            <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                <i class="fas fa-phone-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="sendSimulatedOTP()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fab fa-whatsapp"></i> إرسال كود التفعيل عبر واتساب
+                    </button>
+                </div>
+
+                <!-- OTP code input step (initially hidden) -->
+                <div id="otpStepCode" class="hidden space-y-3">
+                    <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-amber-600 dark:text-amber-400 text-xs text-center">
+                        <i class="fas fa-info-circle mr-1"></i> لقد أرسلنا كوداً مؤقتاً مكوناً من 6 أرقام لهاتفك.
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1.5">أدخل كود التحقق (6 أرقام)</label>
+                        <input type="text" id="otpCodeInput" maxlength="6" class="w-full bg-slate-50 dark:bg-brandDark border border-slate-200 dark:border-brandBorderDark rounded-xl p-3 text-center tracking-[0.5em] font-mono text-base focus:outline-none focus:ring-2 focus:ring-brandBlue dark:text-white" placeholder="000000">
+                    </div>
+
+                    <div class="flex gap-2.5">
+                        <button onclick="verifySimulatedOTP()" class="w-2/3 py-3 bg-brandBlue hover:bg-brandBlueHover text-white font-bold text-sm rounded-xl transition-all shadow-md active:scale-95">
+                            التحقق والتأكيد
+                        </button>
+                        <button onclick="resetOTPVerification()" class="w-1/3 py-3 bg-slate-100 dark:bg-brandBorderDark text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl hover:bg-slate-200 transition-all">
+                            تراجع
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: Profile View -->
+        <div id="tabProfile" class="tab-content hidden space-y-5">
+            <h2 class="text-lg font-bold flex items-center gap-2">
+                <i class="far fa-user text-brandBlue"></i>
+                الحساب الشخصي للمستخدم
+            </h2>
+
+            <!-- User Info Card -->
+            <div class="bg-white dark:bg-brandCardDark border border-slate-200 dark:border-brandBorderDark rounded-3xl p-5 shadow-sm space-y-4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-extrabold text-lg text-slate-800 dark:text-white" id="profileName">قرية القلوع</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="profileEmail">alkalou31363@milanaproject.com</p>
+                    </div>
+                    <!-- Badge M -->
+                    <span class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-black text-sm flex items-center justify-center border border-blue-500/20">M</span>
+                </div>
+
+                <!-- Package border layout -->
+                <div class="border border-brandBlue/30 dark:border-brandBorderDark/80 p-4 rounded-2xl relative overflow-hidden bg-slate-50/50 dark:bg-brandDark/40">
+                    <div class="absolute -top-10 -left-10 w-24 h-24 bg-brandBlue/10 rounded-full blur-xl"></div>
+                    <h4 class="font-extrabold text-sm text-slate-800 dark:text-white">الباقة : باقة <span id="profilePlanName" class="text-brandBlue dark:text-blue-400">تجريبية</span></h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">تاريخ الانتهاء : <span id="profileExpiryDate">2026-06-03</span></p>
+                    
+                    <button onclick="showInvoiceModal()" class="mt-3.5 bg-brandBlue hover:bg-brandBlueHover text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-md shadow-blue-500/10 flex items-center gap-1.5">
+                        <i class="fas fa-file-invoice"></i> عرض الفاتورة الرسمية
+                    </button>
+                </div>
+            </div>
+
+            <!-- FB integration settings inside profile -->
+            <div class="bg-white dark:bg-brandCardDark border border-slate-200 dark:border-brandBorderDark rounded-2xl p-5 shadow-sm space-y-4">
+                <h3 class="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-1.5"><i class="fab fa-facebook text-brandBlue"></i> تكامل الصفحات والربط</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    اربط صفحات الفيسبوك الخاصة بك لمنح منصة كرم صلاحية إدارة التعليقات، إرسال الرسائل، وجدولة البوستات.
+                </p>
+
+                <div class="p-3.5 bg-slate-50 dark:bg-brandDark rounded-xl border border-slate-200 dark:border-brandBorderDark flex justify-between items-center">
+                    <div class="flex items-center gap-2.5">
+                        <i class="fab fa-facebook text-2xl text-blue-600"></i>
+                        <div>
+                            <p class="text-xs font-bold" id="connectedPagesBadge">تم ربط 1 صفحة</p>
+                            <p class="text-[10px] text-emerald-500 mt-0.5"><i class="fas fa-check-circle"></i> توكن نشط</p>
+                        </div>
+                    </div>
+                    <button onclick="simulateFBOAuth()" class="bg-slate-200 dark:bg-brandBorderDark text-slate-700 dark:text-slate-200 text-xs font-bold px-3 py-2 rounded-lg hover:scale-105 transition-all">
+                        تحديث الربط
+                    </button>
+                </div>
+            </div>
+
+            <!-- Logout Simulated Action -->
+            <button onclick="simulateLogout()" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-red-500/10 transition-all active:scale-95 text-sm flex items-center justify-center gap-2">
+                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج من المنصة
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-brandCardDark border-t border-slate-200 dark:border-brandBorderDark shadow-[0_-8px_24px_rgba(0,0,0,0.06)] py-2 px-4 rounded-t-[2.5rem] transition-colors duration-300 z-40 max-w-md mx-auto">
+        <div class="flex justify-between items-center px-2">
+            <!-- Nav Item 1: Home -->
+            <button id="navHomeBtn" onclick="goToTab('tabHome')" class="flex flex-col items-center justify-center p-2 text-brandGold transition-all">
+                <i class="fas fa-home text-xl mb-1"></i>
+                <span class="text-[9px] font-bold">الرئيسية</span>
+            </button>
+            
+            <!-- Nav Item 2: Scheduler -->
+            <button id="navSchedulerBtn" onclick="goToTab('tabScheduler')" class="flex flex-col items-center justify-center p-2 text-slate-400 dark:text-slate-500 hover:text-brandBlue transition-all">
+                <i class="far fa-calendar-alt text-xl mb-1"></i>
+                <span class="text-[9px] font-bold">المجدول</span>
+            </button>
+
+            <!-- Nav Item 3: Center Smart Robot Button -->
+            <button id="navBotBtn" onclick="goToTab('tabBot')" class="flex flex-col items-center justify-center bg-slate-100 dark:bg-brandBorderDark hover:bg-slate-200 dark:hover:bg-slate-700 text-brandBlue p-3 rounded-2xl -mt-8 shadow-lg border border-slate-200 dark:border-brandBorderDark transform hover:scale-105 transition-all">
+                <i class="fas fa-robot text-xl"></i>
+            </button>
+
+            <!-- Nav Item 4: Verification / Security -->
+            <button id="navVerificationBtn" onclick="goToTab('tabVerification')" class="flex flex-col items-center justify-center p-2 text-slate-400 dark:text-slate-500 hover:text-brandBlue transition-all">
+                <i class="fas fa-shield-alt text-xl mb-1"></i>
+                <span class="text-[9px] font-bold">الأمان</span>
+            </button>
+
+            <!-- Nav Item 5: Profile -->
+            <button id="navProfileBtn" onclick="goToTab('tabProfile')" class="flex flex-col items-center justify-center p-2 text-slate-400 dark:text-slate-500 hover:text-brandBlue transition-all">
+                <i class="far fa-user text-xl mb-1"></i>
+                <span class="text-[9px] font-bold">حسابي</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Invoice Modal (Simulated) -->
+    <div id="invoiceModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
+        <div class="bg-white dark:bg-brandCardDark border border-slate-200 dark:border-brandBorderDark rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl transform scale-95 transition-all">
+            <div class="bg-gradient-to-r from-brandBlue to-blue-700 p-5 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="font-extrabold text-base">الفاتورة الرقمية</h3>
+                    <p class="text-[10px] opacity-85">منصة كرم للذكاء الاصطناعي</p>
+                </div>
+                <i class="fas fa-file-invoice text-3xl opacity-35"></i>
+            </div>
+            
+            <div class="p-5 space-y-4 text-right">
+                <div class="flex justify-between items-center border-b border-slate-100 dark:border-brandBorderDark pb-2 text-xs">
+                    <span class="text-slate-400">اسم العميل:</span>
+                    <span class="font-bold">قرية القلوع</span>
+                </div>
+                <div class="flex justify-between items-center border-b border-slate-100 dark:border-brandBorderDark pb-2 text-xs">
+                    <span class="text-slate-400">نوع الباقة:</span>
+                    <span class="font-bold text-amber-500 dark:text-brandGold">الباقة الذهبية (Pro)</span>
+                </div>
+                <div class="flex justify-between items-center border-b border-slate-100 dark:border-brandBorderDark pb-2 text-xs">
+                    <span class="text-slate-400">تاريخ التجديد:</span>
+                    <span class="font-semibold text-slate-700 dark:text-slate-300">03 / 06 / 2026</span>
+                </div>
+                <div class="flex justify-between items-center border-b border-slate-100 dark:border-brandBorderDark pb-2 text-xs">
+                    <span class="text-slate-400">قيمة الاشتراك:</span>
+                    <span class="font-bold text-emerald-500">45,000 ل.س / شهرياً</span>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-400">حالة الفاتورة:</span>
+                    <span class="bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded font-bold">مدفوعة <i class="fas fa-check-circle ml-1"></i></span>
+                </div>
+            </div>
+
+            <div class="p-4 bg-slate-50 dark:bg-brandDark flex gap-2 justify-end border-t border-slate-100 dark:border-brandBorderDark">
+                <button onclick="closeInvoiceModal()" class="px-5 py-2 bg-slate-200 dark:bg-brandBorderDark text-slate-800 dark:text-white rounded-xl text-xs font-bold hover:scale-105 transition-all font-sans">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Application JavaScript Engine -->
+    <script>
+        // Core Simulated Application State (Frontend DB Model simulation)
+        const karamState = {
+            currentUser: {
+                username: "قرية القلوع",
+                email: "alkalou31363@milanaproject.com",
+                phone: "+963933123456",
+                isVerified: false,
+                subscription: {
+                    plan: "Pro",
+                    expiryDate: "2026-06-03",
+                    isActive: true
+                },
+                botSettings: {
+                    autoLikeEnabled: false,
+                    autoCommentEnabled: false,
+                    commentTemplate: "أهلاً بك يا {name} ✨ تم إرسال كافة التفاصيل لبريدك الخاص 📤.",
+                    messengerTemplate: "أهلاً يا غالي {name} 👋 بناءً على تعليقك الكريم، إليك كافة التفاصيل والأسعار 📊. تواصل معنا لأي استفسار 🌹"
+                }
+            },
+            currentPlatform: "fb", // fb or ig
+            subscribers: 3,
+            followers: "43.6K",
+            connectedPages: [
+                { pageId: "1", pageName: "صفحة قرية القلوع الرسمية" }
+            ],
+            scheduledPosts: [
+                {
+                    id: "post_1",
+                    content: "ترقبوا انطلاق العروض الذهبية الكبرى يوم الغد من منصة كرم السحابية! 🔥📉",
+                    scheduledTime: new Date(Date.now() + 10 * 60000).toISOString(), // 10 minutes from now
+                    status: "Pending"
+                },
+                {
+                    id: "post_2",
+                    content: "الحمد لله تم تفعيل ميزة الرد الآلي الكامل وتوثيق الحساب بنجاح 💻📱",
+                    scheduledTime: new Date(Date.now() - 2 * 3600000).toISOString(), // 2 hours ago
+                    status: "Published"
+                }
+            ],
+            sentOTP: null
+        };
+
+        // Theme Toggle Utility (Light / Dark mode switcher)
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('themeIcon');
+            html.classList.toggle('dark');
+            
+            if (html.classList.contains('dark')) {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+                showSimulatedNotification("المظهر المظلم", "تم تفعيل الوضع الليلي بنجاح 🌙", "success");
+            } else {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+                showSimulatedNotification("المظهر المضيء", "تم تفعيل الوضع النهاري بنجاح ☀️", "success");
+            }
+        }
+
+        // Tab Switcher Controller
+        function goToTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            
+            // Show selected tab content
+            document.getElementById(tabId).classList.remove('hidden');
+
+            // Reset navigation button classes
+            const navButtons = {
+                tabHome: 'navHomeBtn',
+                tabScheduler: 'navSchedulerBtn',
+                tabBot: 'navBotBtn',
+                tabVerification: 'navVerificationBtn',
+                tabProfile: 'navProfileBtn'
+            };
+
+            Object.entries(navButtons).forEach(([key, btnId]) => {
+                const btn = document.getElementById(btnId);
+                if (key === tabId) {
+                    btn.classList.add('text-brandGold');
+                    btn.classList.remove('text-slate-400', 'dark:text-slate-500');
+                } else {
+                    btn.classList.remove('text-brandGold');
+                    btn.classList.add('text-slate-400', 'dark:text-slate-500');
+                }
+            });
+        }
+
+        // Custom Toast System to avoid browser alerts
+        function showSimulatedNotification(title, message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let colorClass = 'bg-blue-500 border-blue-600';
+            let iconClass = 'fas fa-info-circle';
+            if (type === 'success') {
+                colorClass = 'bg-emerald-500 border-emerald-600';
+                iconClass = 'fas fa-check-circle';
+            } else if (type === 'warning') {
+                colorClass = 'bg-amber-500 border-amber-600';
+                iconClass = 'fas fa-exclamation-triangle';
+            } else if (type === 'danger') {
+                colorClass = 'bg-red-500 border-red-600';
+                iconClass = 'fas fa-times-circle';
+            }
+
+            toast.className = `flex items-center gap-3 p-4 rounded-2xl text-white shadow-lg border ${colorClass} transition-all duration-300 transform translate-y-2 opacity-0 scale-95 pointer-events-auto text-right`;
+            toast.style.direction = 'rtl';
+            toast.innerHTML = `
+                <div class="text-xl"><i class="${iconClass}"></i></div>
+                <div>
+                    <h4 class="font-bold text-xs">${title}</h4>
+                    <p class="text-[10px] opacity-90 mt-0.5">${message}</p>
+                </div>
+            `;
+
+            container.appendChild(toast);
+            
+            // Trigger animation
+            setTimeout(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2', 'scale-95');
+            }, 10);
+
+            // Auto dismiss toast
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2', 'scale-95');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Platform Switcher (FB / IG)
+        function switchPlatform(platform) {
+            karamState.currentPlatform = platform;
+            
+            const fbBtn = document.getElementById('platformFbBtn');
+            const igBtn = document.getElementById('platformIgBtn');
+
+            if (platform === 'fb') {
+                fbBtn.className = "py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all bg-brandBlue text-white shadow-md shadow-blue-500/20";
+                igBtn.className = "py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white";
+                
+                karamState.subscribers = 3;
+                karamState.followers = "43.6K";
+                showSimulatedNotification("منصة فيسبوك", "تم عرض إحصائيات صفحة فيسبوك بنجاح.", "info");
+            } else {
+                igBtn.className = "py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-md shadow-pink-500/20";
+                fbBtn.className = "py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white";
+                
+                karamState.subscribers = 0;
+                karamState.followers = "12.8K";
+                showSimulatedNotification("منصة انستغرام", "تم عرض إحصائيات حساب انستغرام بنجاح.", "info");
+            }
+
+            document.getElementById('botSubscribersCount').innerText = karamState.subscribers;
+            document.getElementById('followersCount').innerText = karamState.followers;
+        }
+
+        // Show Module Info Modal Simulation
+        function showModuleDetails(moduleName) {
+            showSimulatedNotification("أداة " + moduleName, "أنت الآن تستعرض أداة " + moduleName + ". هذه الميزة نشطة بالكامل وتعمل بتزامن مباشر مع السيرفر السحابي.", "success");
+        }
+
+        // Bot Config togglers
+        function toggleBotConfig(type) {
+            const config = karamState.currentUser.botSettings;
+            if (type === 'comment') {
+                const commentToggle = document.getElementById('commentToggle');
+                config.autoCommentEnabled = commentToggle.checked;
+                updateStatusUI('commentToggle', 'commentStatusText', config.autoCommentEnabled);
+                showSimulatedNotification("التعليق الذهبي", config.autoCommentEnabled ? "تم تفعيل التعليق الذهبي التلقائي بنجاح ✅" : "تم إلغاء تفعيل التعليق التلقائي 🚫", config.autoCommentEnabled ? "success" : "warning");
+            } else if (type === 'like') {
+                const likeToggle = document.getElementById('likeToggle');
+                config.autoLikeEnabled = likeToggle.checked;
+                updateStatusUI('likeToggle', 'likeStatusText', config.autoLikeEnabled);
+                showSimulatedNotification("اللايك الذهبي", config.autoLikeEnabled ? "تم تفعيل الإعجاب التلقائي للتعليقات بنجاح 👍" : "تم إلغاء تفعيل اللايك التلقائي 🚫", config.autoLikeEnabled ? "success" : "warning");
+            }
+        }
+
+        function updateStatusUI(toggleId, textId, isChecked) {
+            const toggle = document.getElementById(toggleId);
+            const statusText = document.getElementById(textId);
+            toggle.checked = isChecked;
+
+            if (isChecked) {
+                statusText.innerText = "نشط ومفعل";
+                statusText.className = "text-[10px] mt-2.5 text-emerald-500 font-bold";
+            } else {
+                statusText.innerText = "غير نشط";
+                statusText.className = "text-[10px] mt-2.5 text-slate-500 dark:text-slate-400";
+            }
+        }
+
+        // Save Bot Custom Templates
+        function saveBotTemplates() {
+            const config = karamState.currentUser.botSettings;
+            config.commentTemplate = document.getElementById('commentReplyTemplateInput').value;
+            config.messengerTemplate = document.getElementById('messengerReplyTemplateInput').value;
+
+            showSimulatedNotification("حفظ القوالب", "تم حفظ وتحديث قوالب الرد الآلي للتعليقات والماسنجر بنجاح.", "success");
+        }
+
+        // Post Scheduler Engine Logic
+        function renderScheduledPosts() {
+            const container = document.getElementById('scheduledPostsContainer');
+            const placeholder = document.getElementById('noPostsPlaceholder');
+            
+            // Filter out existing simulated UI list blocks first
+            const existingItems = container.querySelectorAll('.simulated-post-item');
+            existingItems.forEach(el => el.remove());
+
+            if (karamState.scheduledPosts.length === 0) {
+                placeholder.classList.remove('hidden');
+                return;
+            } else {
+                placeholder.classList.add('hidden');
+            }
+
+            karamState.scheduledPosts.forEach(post => {
+                const item = document.createElement('div');
+                item.className = 'simulated-post-item bg-white dark:bg-brandCardDark border border-slate-200 dark:border-brandBorderDark rounded-2xl p-4 shadow-sm flex flex-col justify-between relative overflow-hidden text-right';
+                
+                let badgeHTML = '';
+                if (post.status === 'Pending') {
+                    badgeHTML = `<span class="bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full"><i class="far fa-clock ml-1"></i> مجدولة</span>`;
+                } else if (post.status === 'Published') {
+                    badgeHTML = `<span class="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full"><i class="fas fa-check-double ml-1"></i> تم النشر</span>`;
+                }
+
+                const postDate = new Date(post.scheduledTime).toLocaleDateString('ar-EG', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                item.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        ${badgeHTML}
+                        <span class="text-[10px] text-slate-400">${postDate}</span>
+                    </div>
+                    <p class="text-xs text-slate-700 dark:text-slate-200 leading-relaxed">${post.content}</p>
+                    <div class="flex justify-end gap-1.5 mt-3.5 pt-2 border-t border-slate-100 dark:border-brandBorderDark text-[10px]">
+                        ${post.status === 'Pending' ? `
+                            <button onclick="simulateInstantPublish('${post.id}')" class="text-brandBlue hover:underline"><i class="fas fa-rocket mr-1"></i> نشر الآن</button>
+                            <span class="text-slate-300">|</span>
+                        ` : ''}
+                        <button onclick="deleteScheduledPost('${post.id}')" class="text-red-500 hover:underline"><i class="far fa-trash-alt mr-1"></i> حذف</button>
+                    </div>
+                `;
+
+                container.appendChild(item);
+            });
+
+            // Update stats indicators
+            const pendingCount = karamState.scheduledPosts.filter(p => p.status === 'Pending').length;
+            const publishedCount = karamState.scheduledPosts.filter(p => p.status === 'Published').length;
+
+            document.getElementById('statsPendingCount').innerText = pendingCount;
+            document.getElementById('statsPublishedCount').innerText = publishedCount;
+        }
+
+        // Add a new post to list
+        function scheduleNewPost() {
+            const content = document.getElementById('postContentInput').value.trim();
+            const timeVal = document.getElementById('postTimeInput').value;
+
+            if (!content) {
+                showSimulatedNotification("حقل فارغ", "يرجى كتابة محتوى المنشور أولاً.", "warning");
+                return;
+            }
+            if (!timeVal) {
+                showSimulatedNotification("تحديد الوقت", "يرجى تحديد وقت وتاريخ النشر بشكل صحيح.", "warning");
+                return;
+            }
+
+            const newPost = {
+                id: "post_" + Date.now(),
+                content: content,
+                scheduledTime: new Date(timeVal).toISOString(),
+                status: "Pending"
+            };
+
+            karamState.scheduledPosts.unshift(newPost);
+            
+            // Clear inputs
+            document.getElementById('postContentInput').value = '';
+            document.getElementById('postTimeInput').value = '';
+
+            renderScheduledPosts();
+            showSimulatedNotification("تمت الجدولة", "تمت جدولة المنشور بنجاح! سيقوم الخادم بنشره فوراً عند حلول الموعد.", "success");
+        }
+
+        // Delete post
+        function deleteScheduledPost(id) {
+            karamState.scheduledPosts = karamState.scheduledPosts.filter(p => p.id !== id);
+            renderScheduledPosts();
+            showSimulatedNotification("حذف المنشور", "تم حذف المنشور المجدول من قائمة الانتظار.", "warning");
+        }
+
+        // Simulate instant publishing action
+        function simulateInstantPublish(id) {
+            const post = karamState.scheduledPosts.find(p => p.id === id);
+            if (post) {
+                post.status = "Published";
+                post.scheduledTime = new Date().toISOString();
+                renderScheduledPosts();
+                showSimulatedNotification("نشر فوري", "تم تشغيل محرك النشر التلقائي ونشر البوست فوراً على فيسبوك! ✅", "success");
+            }
+        }
+
+        // WhatsApp Verification Simulator Flow
+        function sendSimulatedOTP() {
+            const phone = document.getElementById('userPhoneNumber').value.trim();
+            if (!phone) {
+                showSimulatedNotification("بيانات ناقصة", "يرجى إدخال رقم الهاتف مع الرمز الدولي.", "warning");
+                return;
+            }
+
+            // Generate a 6-digit random code
+            const code = Math.floor(100000 + Math.random() * 900000).toString();
+            karamState.sentOTP = code;
+
+            showSimulatedNotification("خدمة WhatsApp API", "جاري توليد وإرسال كود التوثيق لهاتفك المحمول...", "info");
+
+            setTimeout(() => {
+                // Show a pop-up mimicking WhatsApp SMS arrival
+                showSimulatedNotification(
+                    "💬 رسالة واردة من WhatsApp", 
+                    `منصة كرم للذكاء الاصطناعي: كود التوثيق الخاص بك هو [ ${code} ] - لا تشارك هذا الرمز مع أحد لدواعٍ أمنية.`, 
+                    "success"
+                );
+
+                // Advance state UI step
+                document.getElementById('otpStepPhone').classList.add('hidden');
+                document.getElementById('otpStepCode').classList.remove('hidden');
+            }, 1800);
+        }
+
+        function verifySimulatedOTP() {
+            const codeEntered = document.getElementById('otpCodeInput').value.trim();
+            
+            if (codeEntered === karamState.sentOTP) {
+                karamState.currentUser.isVerified = true;
+                
+                // Update Badge UI
+                const badge = document.getElementById('verificationBadge');
+                badge.innerText = 'موثق ومؤمن';
+                badge.className = 'bg-white text-emerald-500 text-[10px] px-2.5 py-0.5 rounded-full font-black flex items-center gap-1 shadow-sm';
+                badge.innerHTML = '<i class="fas fa-check-circle"></i> موثق ومؤمن';
+
+                const card = document.getElementById('activationStateCard');
+                card.className = 'bg-gradient-to-r from-teal-500 to-emerald-600 rounded-3xl p-5 shadow-lg text-white flex justify-between items-center relative overflow-hidden transition-all duration-500';
+
+                showSimulatedNotification("تم التفعيل", "تهانينا! تم تفعيل وتوثيق الحساب بواتساب بنجاح 🔒📱", "success");
+                
+                // Return to first step for reuse
+                resetOTPVerification();
+            } else {
+                showSimulatedNotification("خطأ في التحقق", "كود التحقق غير صحيح، يرجى المحاولة مرة أخرى.", "danger");
+            }
+        }
+
+        function resetOTPVerification() {
+            document.getElementById('otpStepPhone').classList.remove('hidden');
+            document.getElementById('otpStepCode').classList.add('hidden');
+            document.getElementById('otpCodeInput').value = '';
+            karamState.sentOTP = null;
+        }
+
+        // Modal functions
+        function showInvoiceModal() {
+            document.getElementById('invoiceModal').classList.remove('hidden');
+        }
+        function closeInvoiceModal() {
+            document.getElementById('invoiceModal').classList.add('hidden');
+        }
+
+        // Facebook OAuth simulator
+        function simulateFBOAuth() {
+            showSimulatedNotification("تكامل فيسبوك", "جاري الاتصال بـ Meta Graph API لاستيراد أحدث الصلاحيات والتراخيص...", "info");
+            setTimeout(() => {
+                showSimulatedNotification("نجاح المزامنة", "تم استيراد صفحات فيسبوك والتوكنز بنجاح! 🔑", "success");
+            }, 1500);
+        }
+
+        // Logout simulation
+        function simulateLogout() {
+            showSimulatedNotification("تسجيل الخروج", "تم تسجيل الخروج بنجاح من منصة كرم. نأمل رؤيتك قريباً!", "warning");
+        }
+
+        // App initializer
+        window.onload = function() {
+            // Set initial state values to UI
+            document.getElementById('headerUserName').innerText = karamState.currentUser.username;
+            document.getElementById('profileName').innerText = karamState.currentUser.username;
+            document.getElementById('profileEmail').innerText = karamState.currentUser.email;
+            document.getElementById('profilePlanName').innerText = karamState.currentUser.subscription.plan === 'Pro' ? 'ذهبية (Pro)' : 'تجريبية';
+            document.getElementById('profileExpiryDate').innerText = karamState.currentUser.subscription.expiryDate;
+
+            // Set inputs to match state defaults
+            document.getElementById('commentReplyTemplateInput').value = karamState.currentUser.botSettings.commentTemplate;
+            document.getElementById('messengerReplyTemplateInput').value = karamState.currentUser.botSettings.messengerTemplate;
+
+            // Update toggles
+            updateStatusUI('commentToggle', 'commentStatusText', karamState.currentUser.botSettings.autoCommentEnabled);
+            updateStatusUI('likeToggle', 'likeStatusText', karamState.currentUser.botSettings.autoLikeEnabled);
+
+            // Populate list
+            renderScheduledPosts();
+
+            // Set date-picker placeholder to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(12, 0, 0, 0);
+            document.getElementById('postTimeInput').value = tomorrow.toISOString().substring(0, 16);
+        }
+    </script>
+</body>
+</html>
