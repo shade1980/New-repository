@@ -1,163 +1,123 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة كرم | تسجيل الدخول</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: { colors: { brandDark: '#0f172a', brandCard: '#1e293b', brandBlue: '#3b82f6' } }
-            }
-        }
-    </script>
-</head>
-<body class="bg-gray-50 dark:bg-brandDark text-gray-900 dark:text-white min-h-screen transition-colors">
+'use strict';
 
-    <!-- شاشة تسجيل الدخول -->
-    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-brandCard p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100 dark:border-gray-800">
-            <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-brandBlue text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4 shadow-lg">K</div>
-                <h1 class="text-2xl font-bold">تسجيل الدخول لمنصة كرم</h1>
-                <p class="text-gray-500 text-sm mt-2">الرجاء إدخال بيانات حسابك للمتابعة</p>
-            </div>
-            
-            <form id="loginForm" class="space-y-4" onsubmit="handleLogin(event)">
-                <div>
-                    <label class="block text-sm font-bold mb-2">اسم المستخدم</label>
-                    <input type="text" id="username" required class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-brandBlue text-left" dir="ltr">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold mb-2">كلمة المرور</label>
-                    <input type="password" id="password" required class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-brandBlue text-left" dir="ltr">
-                </div>
-                <button type="submit" class="w-full bg-brandBlue hover:bg-blue-600 text-white font-bold py-3 rounded-xl transition-all shadow-md mt-4">
-                    دخول إلى لوحة التحكم
-                </button>
-                <p id="errorMessage" class="text-red-500 text-sm text-center hidden mt-2"></p>
-            </form>
-        </div>
-    </div>
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cron = require('node-cron');
+const axios = require('axios');
+const cors = require('cors');
 
-    <!-- لوحة التحكم (مخفية حتى يتم تسجيل الدخول) -->
-    <div id="dashboardScreen" class="hidden pb-20">
-        <header class="flex justify-between items-center p-4 bg-white dark:bg-brandCard shadow-sm">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-brandBlue text-white flex items-center justify-center font-bold text-xl">K</div>
-                <div>
-                    <h1 class="font-bold" id="dashUsername">مرحباً...</h1>
-                    <p class="text-xs text-green-500"><i class="fas fa-circle text-[8px] mr-1"></i> متصل بالسيرفر</p>
-                </div>
-            </div>
-            <button onclick="logout()" class="text-red-500 font-bold text-sm"><i class="fas fa-sign-out-alt ml-1"></i> خروج</button>
-        </header>
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 
-        <main class="p-4 max-w-md mx-auto mt-4 space-y-4">
-            
-            <!-- ربط فيسبوك -->
-            <div class="bg-white dark:bg-brandCard rounded-2xl p-5 shadow border border-gray-100 dark:border-gray-800 text-center">
-                <i class="fab fa-facebook text-4xl text-blue-600 mb-3"></i>
-                <h3 class="font-bold text-lg mb-2">ربط حساب فيسبوك</h3>
-                <p class="text-sm text-gray-500 mb-4">اربط صفحاتك لإدارة التعليقات والرسائل تلقائياً.</p>
-                <button onclick="connectFacebook()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md">
-                    <i class="fas fa-link ml-2"></i> ربط حسابي الآن
-                </button>
-            </div>
+// ==========================================
+// 1. هيكل قاعدة البيانات
+// ==========================================
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  phone: { type: String, default: '000000000' },
+  isPhoneVerified: { type: Boolean, default: false },
+  subscription: {
+    plan: { type: String, enum: ['Trial', 'Basic', 'Pro'], default: 'Trial' },
+    expiryDate: { type: Date, required: true },
+    isActive: { type: Boolean, default: true }
+  },
+  botSettings: {
+    autoLikeEnabled: { type: Boolean, default: false },
+    autoCommentEnabled: { type: Boolean, default: false },
+  },
+  facebookTokens: [{ pageId: String, pageName: String, accessToken: String }]
+}, { timestamps: true });
 
-            <!-- إعدادات البوت -->
-            <h2 class="font-bold text-xl mt-6 mb-2">إعدادات البوت التلقائي</h2>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white dark:bg-brandCard p-4 rounded-2xl shadow border border-gray-100 dark:border-gray-800 text-center">
-                    <i class="fas fa-comment-dots text-2xl text-emerald-500 mb-2"></i>
-                    <h3 class="font-bold">التعليق الذهبي</h3>
-                    <span class="text-xs text-emerald-500 font-bold mt-2 block">مفعل</span>
-                </div>
-                <div class="bg-white dark:bg-brandCard p-4 rounded-2xl shadow border border-gray-100 dark:border-gray-800 text-center">
-                    <i class="fas fa-heart text-2xl text-red-500 mb-2"></i>
-                    <h3 class="font-bold">اللايك الذهبي</h3>
-                    <span class="text-xs text-red-500 font-bold mt-2 block">مفعل</span>
-                </div>
-            </div>
-        </main>
-    </div>
+const scheduledPostSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  pageId: { type: String, required: true },
+  content: { type: String, required: true },
+  mediaUrls: [String],
+  scheduledTime: { type: Date, required: true },
+  status: { type: String, enum: ['Pending', 'Published', 'Failed'], default: 'Pending' }
+});
 
-    <script>
-        // رابط السيرفر الحقيقي (الذي يحتوي على الكود الأول)
-        // عند رفعه على سيرفر حقيقي، استبدل هذا الرابط برابط السيرفر
-        const SERVER_URL = 'http://localhost:3000'; 
-        let currentUserId = localStorage.getItem('karam_user_id');
-        let currentToken = localStorage.getItem('karam_token');
+const User = mongoose.model('User', userSchema);
+const Post = mongoose.model('Post', scheduledPostSchema);
 
-        // التحقق من حالة الدخول عند فتح الصفحة
-        window.onload = () => {
-            if (currentToken && currentUserId) {
-                showDashboard(localStorage.getItem('karam_username'));
-            }
-        };
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log(`✅ تمت تهيئة قاعدة بيانات منصة كرم بنجاح.`);
+  } catch (error) {
+    console.error(`❌ خطأ في الاتصال بقاعدة البيانات: ${error.message}`);
+  }
+};
 
-        // دالة تسجيل الدخول الحقيقية
-        async function handleLogin(e) {
-            e.preventDefault();
-            const usernameInput = document.getElementById('username').value;
-            const passwordInput = document.getElementById('password').value;
-            const errorMsg = document.getElementById('errorMessage');
+// ==========================================
+// 2. مسارات واجهات التطبيقات (API Routes)
+// ==========================================
 
-            try {
-                // إرسال طلب حقيقي للسيرفر
-                const response = await fetch(`${SERVER_URL}/api/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: usernameInput, password: passwordInput })
-                });
+// مسار تسجيل الدخول (مُحدّث ليعمل بشكل حقيقي)
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        // البحث عن المستخدم بالإيميل
+        let user = await User.findOne({ email: email });
+        
+        if (!user) {
+            // إذا لم يكن موجوداً، قم بإنشاء حساب جديد فوراً
+            const expiry = new Date();
+            expiry.setDate(expiry.getDate() + 30); // باقة تجريبية 30 يوم
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    // حفظ البيانات في المتصفح
-                    localStorage.setItem('karam_token', data.token);
-                    localStorage.setItem('karam_user_id', data.userId);
-                    localStorage.setItem('karam_username', data.username);
-                    
-                    currentUserId = data.userId;
-                    showDashboard(data.username);
-                } else {
-                    errorMsg.innerText = data.message;
-                    errorMsg.classList.remove('hidden');
-                }
-            } catch (error) {
-                errorMsg.innerText = "تعذر الاتصال بالسيرفر. تأكد من تشغيل السيرفر الخلفي.";
-                errorMsg.classList.remove('hidden');
-            }
+            user = await User.create({
+                username: email.split('@')[0], // نأخذ الاسم من الإيميل
+                email: email,
+                password: password,
+                subscription: { plan: 'Trial', expiryDate: expiry, isActive: true },
+                botSettings: { autoLikeEnabled: false, autoCommentEnabled: false }
+            });
+            console.log(`👤 تم إنشاء حساب جديد: ${email}`);
+        } else if (user.password !== password) {
+            // إذا كان موجوداً ولكن الباسورد غلط
+            return res.status(401).json({ error: 'كلمة المرور غير صحيحة' });
         }
 
-        // دالة الربط مع فيسبوك الحقيقية
-        async function connectFacebook() {
-            try {
-                const response = await fetch(`${SERVER_URL}/api/facebook/login-url?userId=${currentUserId}`);
-                const data = await response.json();
-                if (data.url) {
-                    // إعادة توجيه المستخدم لصفحة فيسبوك الرسمية للموافقة
-                    window.location.href = data.url;
-                }
-            } catch (error) {
-                alert("تعذر الاتصال بالسيرفر لطلب رابط الربط.");
-            }
-        }
+        // نجاح الدخول
+        res.json({ userId: user._id, username: user.username, botSettings: user.botSettings, subscription: user.subscription });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-        function showDashboard(username) {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('dashboardScreen').classList.remove('hidden');
-            document.getElementById('dashUsername').innerText = username;
-        }
+// إحصائيات لوحة التحكم
+app.get('/api/dashboard/stats', async (req, res) => {
+  try {
+    const user = await User.findById(req.query.userId);
+    if(!user) return res.status(404).json({ error: 'المستخدم غير موجود' });
+    const pending = await Post.countDocuments({ userId: user._id, status: 'Pending' });
+    const published = await Post.countDocuments({ userId: user._id, status: 'Published' });
+    res.json({ username: user.username, botSettings: user.botSettings, subscription: user.subscription, pending, published });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
-        function logout() {
-            localStorage.clear();
-            location.reload();
-        }
-    </script>
-</body>
-</html>
+// تحديث الإعدادات
+app.put('/api/dashboard/settings', async (req, res) => {
+    try {
+        const { userId, autoLikeEnabled, autoCommentEnabled } = req.body;
+        const user = await User.findByIdAndUpdate(userId, {
+            $set: { 'botSettings.autoLikeEnabled': autoLikeEnabled, 'botSettings.autoCommentEnabled': autoCommentEnabled }
+        }, { new: true });
+        res.json({ success: true, botSettings: user.botSettings });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==========================================
+// 3. تشغيل السيرفر
+// ==========================================
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, async () => {
+  await connectDB();
+  console.log(`🚀 منصة "كرم" تعمل ككتلة برمجية واحدة على المنفذ ${PORT}`);
+});
