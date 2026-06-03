@@ -1,136 +1,45 @@
-'use strict';
-
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cron = require('node-cron');
-const axios = require('axios');
-const cors = require('cors');
-
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cors());
-
-// ==========================================
-// 1. هيكل قاعدة البيانات
-// ==========================================
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  phone: { type: String, default: '000000000' },
-  isPhoneVerified: { type: Boolean, default: false },
-  subscription: {
-    plan: { type: String, enum: ['Trial', 'Basic', 'Pro'], default: 'Trial' },
-    expiryDate: { type: Date, required: true },
-    isActive: { type: Boolean, default: true }
-  },
-  botSettings: {
-    autoLikeEnabled: { type: Boolean, default: false },
-    autoCommentEnabled: { type: Boolean, default: false },
-  },
-  facebookTokens: [{ pageId: String, pageName: String, accessToken: String }]
-}, { timestamps: true });
-
-const scheduledPostSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  pageId: { type: String, required: true },
-  content: { type: String, required: true },
-  mediaUrls: [String],
-  scheduledTime: { type: Date, required: true },
-  status: { type: String, enum: ['Pending', 'Published', 'Failed'], default: 'Pending' }
-});
-
-const User = mongoose.model('User', userSchema);
-const Post = mongoose.model('Post', scheduledPostSchema);
-
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log(`✅ تمت تهيئة قاعدة بيانات منصة كرم بنجاح.`);
-  } catch (error) {
-    console.error(`❌ خطأ في الاتصال بقاعدة البيانات: ${error.message}`);
-  }
-};
-
-// ==========================================
-// 2. مسارات واجهات التطبيقات (API Routes)
-// ==========================================
-
-// مسار تسجيل الدخول (مُحدّث ليعمل بشكل حقيقي)
-app.post('/api/auth/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        
-        // البحث عن المستخدم بالإيميل
-        let user = await User.findOne({ email: email });
-        
-        if (!user) {
-            // إذا لم يكن موجوداً، قم بإنشاء حساب جديد فوراً
-            const expiry = new Date();
-            expiry.setDate(expiry.getDate() + 30); // باقة تجريبية 30 يوم
-
-            user = await User.create({
-                username: email.split('@')[0], // نأخذ الاسم من الإيميل
-                email: email,
-                password: password,
-                subscription: { plan: 'Trial', expiryDate: expiry, isActive: true },
-                botSettings: { autoLikeEnabled: false, autoCommentEnabled: false }
-            });
-            console.log(`👤 تم إنشاء حساب جديد: ${email}`);
-        } else if (user.password !== password) {
-            // إذا كان موجوداً ولكن الباسورد غلط
-            return res.status(401).json({ error: 'كلمة المرور غير صحيحة' });
-        }
-
-        // نجاح الدخول
-        res.json({ userId: user._id, username: user.username, botSettings: user.botSettings, subscription: user.subscription });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// إحصائيات لوحة التحكم
-app.get('/api/dashboard/stats', async (req, res) => {
-  try {
-    const user = await User.findById(req.query.userId);
-    if(!user) return res.status(404).json({ error: 'المستخدم غير موجود' });
-    const pending = await Post.countDocuments({ userId: user._id, status: 'Pending' });
-    const published = await Post.countDocuments({ userId: user._id, status: 'Published' });
-    res.json({ username: user.username, botSettings: user.botSettings, subscription: user.subscription, pending, published });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// تحديث الإعدادات
-app.put('/api/dashboard/settings', async (req, res) => {
-    try {
-        const { userId, autoLikeEnabled, autoCommentEnabled } = req.body;
-        const user = await User.findByIdAndUpdate(userId, {
-            $set: { 'botSettings.autoLikeEnabled': autoLikeEnabled, 'botSettings.autoCommentEnabled': autoCommentEnabled }
-        }, { new: true });
-        res.json({ success: true, botSettings: user.botSettings });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// ==========================================
-// 3. تشغيل السيرفر
-// ==========================================
-// تشغيل السيرفر بعد التأكد من سلامة الاتصال بقاعدة البيانات
-const startServer = async () => {
-  try {
-    await connectDB();
-    console.log("✅ تم الاتصال بقاعدة البيانات بنجاح");
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>منصة كرم - لوحة التحكم</title>
+</head>
+<body>
+    <h1>مرحباً بك يا أبو علي في لوحة تحكم "كرم"</h1>
     
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-      console.log(`🚀 منصة "كرم" تعمل بكامل طاقتها على المنفذ ${PORT}`);
-    });
-  } catch (error) {
-    console.error("❌ فشل تشغيل المنصة بسبب خطأ في الاتصال بقاعدة البيانات:", error.message);
-    process.exit(1); // إيقاف العملية في حال فشل الاتصال
-  }
-};
+    <button id="likeBtn">تفعيل اللايك التلقائي</button>
+    <p id="statusMsg"></p>
 
-startServer();
-});
+    <script>
+        // الرابط السحابي الخاص بسيرفرك
+        const API_BASE = 'https://karam-server.onrender.com';
+
+        document.getElementById('likeBtn').addEventListener('click', async () => {
+            const status = document.getElementById('statusMsg');
+            status.innerText = "جاري الاتصال بالسيرفر...";
+
+            try {
+                // إرسال طلب تفعيل للسيرفر
+                const response = await fetch(`${API_BASE}/api/dashboard/settings`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        userId: "USER_ID_HERE", // هنا ستضع معرف المستخدم الحقيقي
+                        autoLikeEnabled: true 
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    status.innerText = "✅ تم تفعيل اللايك بنجاح!";
+                } else {
+                    status.innerText = "❌ فشل التفعيل: " + data.error;
+                }
+            } catch (err) {
+                status.innerText = "⚠️ خطأ في الاتصال بالخادم، تأكد من عمل السيرفر.";
+            }
+        });
+    </script>
+</body>
+</html>
