@@ -65,7 +65,43 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+// ==========================================
+// 4. مسارات Meta Webhook (التحقق والاستقبال)
+// ==========================================
 
+// رمز تحقق سري من اختيارك لربطه بـ Meta Developers
+const VERIFY_TOKEN = 'KaramToken2026';
+
+// مسار التحقق (GET) الذي يطلبه فيسبوك عند الربط لأول مرة
+app.get('/webhook', (req, res) => {
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+
+    if (mode && token) {
+        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+            console.log('✅ تم التحقق من الـ Webhook بنجاح بواسطة Meta');
+            return res.status(200).send(challenge);
+        } else {
+            return res.sendStatus(403);
+        }
+    }
+});
+
+// مسار استقبال البيانات الحية (POST) عند حدوث تعليق أو رسالة
+app.post('/webhook', (req, res) => {
+    const body = req.body;
+
+    if (body.object === 'page') {
+        // هنا ستصل تفاصيل التعليقات والرسائل الحية
+        console.log('📩 تفاصيل الحدث القادم من فيسبوك:', JSON.stringify(body, null, 2));
+        
+        // إشعار فيسبوك باستلام البيانات بنجاح لكي لا يكرر إرسالها
+        res.status(200).send('EVENT_RECEIVED');
+    } else {
+        res.sendStatus(404);
+    }
+});
 const PORT = process.env.PORT || 3000;
 
 // الاتصال بقاعدة البيانات ثم تشغيل السيرفر
