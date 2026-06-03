@@ -117,6 +117,14 @@ app.put('/api/dashboard/settings', async (req, res) => {
 // 3. تشغيل السيرفر
 // ==========================================
 const PORT = process.env.PORT || 3000;
+// إضافة للربط بين السيرفر والواجهة الأمامية
+const path = require('path');
+app.use(express.static(path.join(__dirname, 'public'))); // تأكد من وضع ملف index.html في مجلد اسمه public
+
+// أو ببساطة إذا كان الملف في نفس المجلد:
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 app.listen(PORT, async () => {
   await connectDB();
   console.log(`🚀 منصة "كرم" تعمل ككتلة برمجية واحدة على المنفذ ${PORT}`);
