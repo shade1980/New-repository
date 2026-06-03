@@ -116,8 +116,21 @@ app.put('/api/dashboard/settings', async (req, res) => {
 // ==========================================
 // 3. تشغيل السيرفر
 // ==========================================
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
-  await connectDB();
-  console.log(`🚀 منصة "كرم" تعمل ككتلة برمجية واحدة على المنفذ ${PORT}`);
+// تشغيل السيرفر بعد التأكد من سلامة الاتصال بقاعدة البيانات
+const startServer = async () => {
+  try {
+    await connectDB();
+    console.log("✅ تم الاتصال بقاعدة البيانات بنجاح");
+    
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+      console.log(`🚀 منصة "كرم" تعمل بكامل طاقتها على المنفذ ${PORT}`);
+    });
+  } catch (error) {
+    console.error("❌ فشل تشغيل المنصة بسبب خطأ في الاتصال بقاعدة البيانات:", error.message);
+    process.exit(1); // إيقاف العملية في حال فشل الاتصال
+  }
+};
+
+startServer();
 });
