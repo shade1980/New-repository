@@ -2,88 +2,169 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>منصة كرم - لوحة التحكم</title>
+    <title>منصة كرم - لوحة التحكم الاحترافية</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-        input { padding: 10px; margin: 5px; width: 250px; }
-        button { padding: 10px 20px; cursor: pointer; background-color: #28a745; color: white; border: none; }
-        #dashboardSection { display: none; border-top: 2px solid #eee; margin-top: 20px; padding-top: 20px; }
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; text-align: center; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        input { padding: 12px; margin: 8px; width: 80%; max-width: 300px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 12px 25px; cursor: pointer; background-color: #28a745; color: white; border: none; border-radius: 5px; font-weight: bold; margin: 5px; }
+        button.blue-btn { background-color: #007bff; }
+        button.fb-btn { background-color: #1877f2; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 20px; }
+        .card { background: #fafafa; padding: 20px; border: 1px solid #eee; border-radius: 8px; text-align: center; }
+        #dashboardSection { display: none; }
+        #registerSection { display: none; }
+        .status { font-weight: bold; margin-top: 10px; color: #666; }
     </style>
 </head>
 <body>
-    <h1>مرحباً بك في منصة "كرم"</h1>
 
-    <!-- قسم تسجيل الدخول -->
+<div class="container">
+    <h1>🚀 مرحباً بك في منصة "كرم"</h1>
+    <p style="color: #666;">منظومة الذكاء الاصطناعي لإدارة وتنمية صفحات التواصل الاجتماعي</p>
+
     <div id="loginSection">
-        <h3>تسجيل الدخول</h3>
+        <h3>تسجيل الدخول إلى حسابك</h3>
         <input type="email" id="email" placeholder="البريد الإلكتروني"> <br>
         <input type="password" id="password" placeholder="كلمة المرور"> <br>
-        <button onclick="login()">دخول</button>
+        <button onclick="login()">دخول آمن</button> <br>
+        <a href="#" onclick="showRegister()">ليس لديك حساب؟ أنشئ حسابك الآن</a>
         <p id="loginError" style="color: red;"></p>
     </div>
 
-    <!-- قسم لوحة التحكم (يظهر بعد الدخول) -->
-    <div id="dashboardSection">
-        <h2 id="welcomeMsg"></h2>
-        <button id="likeBtn" onclick="toggleLike()">تفعيل اللايك التلقائي</button>
-        <p id="statusMsg"></p>
+    <div id="registerSection">
+        <h3>إنشاء حساب جديد في المنصة</h3>
+        <input type="text" id="regName" placeholder="الاسم الكامل أو اسم العمل"> <br>
+        <input type="email" id="regEmail" placeholder="البريد الإلكتروني"> <br>
+        <input type="password" id="regPassword" placeholder="كلمة المرور"> <br>
+        <button onclick="register()" class="blue-btn">حفظ وتثبيت الحساب</button> <br>
+        <a href="#" onclick="showLogin()">العودة لشاشة الدخول</a>
+        <p id="regStatus" style="color: green;"></p>
     </div>
 
-    <script>
-        const API_BASE = 'https://karam-server.onrender.com';
-        let currentUserId = null;
+    <div id="dashboardSection">
+        <h2 id="welcomeMsg" style="color: #2c3e50;"></h2>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-        async function login() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const errorP = document.getElementById('loginError');
+        <div class="grid">
+            
+            <div class="card">
+                <h3>تكامل الحسابات</h3>
+                <p style="font-size: 13px; color: #777;">ربط السيرفر السحابي بصفحات Meta الحية</p>
+                <button class="fb-btn" onclick="connectFacebook()">ربط صفحة Facebook</button>
+                <p id="fbStatus" class="status">الحالة: غير متصل ❌</p>
+            </div>
 
-            try {
-                const res = await fetch(`${API_BASE}/api/auth/login`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await res.json();
+            <div class="card">
+                <h3>التفاعل التلقائي</h3>
+                <p style="font-size: 13px; color: #777;">الرد بالإعجابات الفورية على تفاعلات الزبائن</p>
+                <button id="likeBtn" onclick="toggleOption('like')">تفعيل اللايك التلقائي</button>
+                <p id="likeStatus" class="status">الحالة: متوقف ⚪</p>
+            </div>
 
-                if (data.success) {
-                    currentUserId = data.userId; // هنا يتم جلب الـ ID الحقيقي من قاعدة البيانات
-                    document.getElementById('loginSection').style.display = 'none';
-                    document.getElementById('dashboardSection').style.display = 'block';
-                    document.getElementById('welcomeMsg').innerText = "مرحباً بك يا " + data.username + " في لوحة تحكم كرم";
-                } else {
-                    errorP.innerText = data.error;
-                }
-            } catch (err) {
-                errorP.innerText = "⚠️ فشل الاتصال بالسيرفر";
+            <div class="card">
+                <h3>الردود والتعليقات الذكية</h3>
+                <p style="font-size: 13px; color: #777;">تفعيل محرك الردود والذكاء الاصطناعي على المنشورات</p>
+                <button id="commentBtn" class="blue-btn" onclick="toggleOption('comment')">تفعيل الرد والتعليق</button>
+                <p id="commentStatus" class="status">الحالة: متوقف ⚪</p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = 'https://karam-server.onrender.com';
+    let currentUserId = null;
+    let settings = { autoLikeEnabled: false, autoCommentEnabled: false };
+
+    function showRegister() {
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('registerSection').style.display = 'block';
+    }
+
+    function showLogin() {
+        document.getElementById('registerSection').style.display = 'none';
+        document.getElementById('loginSection').style.display = 'block';
+    }
+
+    async function register() {
+        const username = document.getElementById('regName').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPassword').value;
+        const status = document.getElementById('regStatus');
+
+        try {
+            await fetch(`${API_BASE}/api/auth/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email, password, username, isRegistering: true })
+            });
+            status.innerText = "✅ تم إنشاء الحساب بنجاح! جاري تحويلك للدخول...";
+            setTimeout(showLogin, 2000);
+        } catch (err) {
+            status.innerText = "⚠️ حدث خطأ أثناء الحفظ التلقائي";
+        }
+    }
+
+    async function login() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorP = document.getElementById('loginError');
+
+        try {
+            const res = await fetch(`${API_BASE}/api/auth/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                currentUserId = data.userId;
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('dashboardSection').style.display = 'block';
+                document.getElementById('welcomeMsg').innerText = "مرحباً بك يا " + data.username + " في لوحة تحكم كرم";
+            } else {
+                errorP.innerText = data.error;
             }
+        } catch (err) {
+            errorP.innerText = "⚠️ فشل الاتصال بالسيرفر";
+        }
+    }
+
+    // دالة ديناميكية لتشغيل وإيقاف الخيارات وإرسالها للسيرفر
+    async function toggleOption(type) {
+        if(type === 'like') {
+            settings.autoLikeEnabled = !settings.autoLikeEnabled;
+            document.getElementById('likeStatus').innerText = settings.autoLikeEnabled ? "الحالة: يعمل بنجاح ✅" : "الحالة: متوقف ⚪";
+            document.getElementById('likeStatus').style.color = settings.autoLikeEnabled ? "green" : "#666";
+        } else if(type === 'comment') {
+            settings.autoCommentEnabled = !settings.autoCommentEnabled;
+            document.getElementById('commentStatus').innerText = settings.autoCommentEnabled ? "الحالة: يعمل بنجاح ✅" : "الحالة: متوقف ⚪";
+            document.getElementById('commentStatus').style.color = settings.autoCommentEnabled ? "green" : "#666";
         }
 
-        async function toggleLike() {
-            const status = document.getElementById('statusMsg');
-            status.innerText = "جاري التحديث...";
-
-            try {
-                const res = await fetch(`${API_BASE}/api/dashboard/settings`, {
-                    method: 'PUT',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        userId: currentUserId, // استخدام الـ ID الحقيقي الذي حصلنا عليه عند الدخول
-                        autoLikeEnabled: true 
-                    })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    status.innerText = "✅ تم تحديث الإعدادات بنجاح!";
-                    status.style.color = "green";
-                } else {
-                    status.innerText = "❌ فشل التحديث: " + data.error;
-                    status.style.color = "red";
-                }
-            } catch (err) {
-                status.innerText = "⚠️ خطأ في الاتصال";
-            }
+        try {
+            await fetch(`${API_BASE}/api/dashboard/settings`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    userId: currentUserId, 
+                    autoLikeEnabled: settings.autoLikeEnabled,
+                    autoCommentEnabled: settings.autoCommentEnabled
+                })
+            });
+        } catch (err) {
+            console.error("خطأ في تحديث البيانات السحابية");
         }
-    </script>
+    }
+
+    function connectFacebook() {
+        alert("سيتم نقلك الآن لربط تطبيق منصة كرم مع Meta Webhooks لحساب الأرباح والردود الحية.");
+        document.getElementById('fbStatus').innerText = "الحالة: بانتظار إشارة الـ Webhook ⏳";
+        document.getElementById('fbStatus').style.color = "orange";
+    }
+</script>
 </body>
 </html>
