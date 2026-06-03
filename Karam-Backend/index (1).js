@@ -1,0 +1,131 @@
+'use strict';
+
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cron = require('node-cron');
+const axios = require('axios');
+const cors = require('cors');
+
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
+
+// ==========================================
+// 1. هيكل قاعدة البيانات
+// ==========================================
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  phone: { type: String, default: '000000000' },
+  isPhoneVerified: { type: Boolean, default: false },
+  subscription: {
+    plan: { type: String, enum: ['Trial', 'Basic', 'Pro'], default: 'Trial' },
+    expiryDate: { type: Date, required: true },
+    isActive: { type: Boolean, default: true }
+  },
+  botSettings: {
+    autoLikeEnabled: { type: Boolean, default: false },
+    autoCommentEnabled: { type: Boolean, default: false },
+  },
+  facebookTokens: [{ pageId: String, pageName: String, accessToken: String }]
+}, { timestamps: true });
+
+const scheduledPostSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  pageId: { type: String, required: true },
+  content: { type: String, required: true },
+  mediaUrls: [String],
+  scheduledTime: { type: Date, required: true },
+  status: { type: String, enum: ['Pending', 'Published', 'Failed'], default: 'Pending' }
+});
+
+const User = mongoose.model('User', userSchema);
+const Post = mongoose.model('Post', scheduledPostSchema);
+
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log(`✅ تمت تهيئة قاعدة بيانات منصة كرم بنجاح.`);
+  } catch (error) {
+    console.error(`❌ خطأ في الاتصال بقاعدة البيانات: ${error.message}`);
+  }
+};
+
+// ==========================================
+// 2. مسارات واجهات التطبيقات (API Routes)
+// ==========================================
+
+// مسار تسجيل الدخول (مُحدّث ليعمل بشكل حقيقي)
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        // البحث عن المستخدم بالإيميل
+        let user = await User.findOne({ email: email });
+        
+        if (!user) {
+            // إذا لم يكن موجوداً، قم بإنشاء حساب جديد فوراً
+            const expiry = new Date();
+            expiry.setDate(expiry.getDate() + 30); // باقة تجريبية 30 يوم
+
+            user = await User.create({
+                username: email.split('@')[0], // نأخذ الاسم من الإيميل
+                email: email,
+                password: password,
+                subscription: { plan: 'Trial', expiryDate: expiry, isActive: true },
+                botSettings: { autoLikeEnabled: false, autoCommentEnabled: false }
+            });
+            console.log(`👤 تم إنشاء حساب جديد: ${email}`);
+        } else if (user.password !== password) {
+            // إذا كان موجوداً ولكن الباسورد غلط
+            return res.status(401).json({ error: 'كلمة المرور غير صحيحة' });
+        }
+
+        // نجاح الدخول
+        res.json({ userId: user._id, username: user.username, botSettings: user.botSettings, subscription: user.subscription });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// إحصائيات لوحة التحكم
+app.get('/api/dashboard/stats', async (req, res) => {
+  try {
+    const user = await User.findById(req.query.userId);
+    if(!user) return res.status(404).json({ error: 'المستخدم غير موجود' });
+    const pending = await Post.countDocuments({ userId: user._id, status: 'Pending' });
+    const published = await Post.countDocuments({ userId: user._id, status: 'Published' });
+    res.json({ username: user.username, botSettings: user.botSettings, subscription: user.subscription, pending, published });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// تحديث الإعدادات
+app.put('/api/dashboard/settings', async (req, res) => {
+    try {
+        const { userId, autoLikeEnabled, autoCommentEnabled } = req.body;
+        const user = await User.findByIdAndUpdate(userId, {
+            $set: { 'botSettings.autoLikeEnabled': autoLikeEnabled, 'botSettings.autoCommentEnabled': autoCommentEnabled }
+        }, { new: true });
+        res.json({ success: true, botSettings: user.botSettings });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==========================================
+// 3. تشغيل السيرفر
+// ==========================================
+const PORT = process.env.PORT || 3000;
+// إضافة للربط بين السيرفر والواجهة الأمامية
+const path = require('path');
+app.use(express.static(path.join(__dirname, 'public'))); // تأكد من وضع ملف index.html في مجلد اسمه public
+
+// أو ببساطة إذا كان الملف في نفس المجلد:
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+app.listen(PORT, async () => {
+  await connectDB();
+  console.log(`🚀 منصة "كرم" تعمل ككتلة برمجية واحدة على المنفذ ${PORT}`);
+});
