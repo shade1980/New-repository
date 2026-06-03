@@ -3,43 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <title>منصة كرم - لوحة التحكم</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        input { padding: 10px; margin: 5px; width: 250px; }
+        button { padding: 10px 20px; cursor: pointer; background-color: #28a745; color: white; border: none; }
+        #dashboardSection { display: none; border-top: 2px solid #eee; margin-top: 20px; padding-top: 20px; }
+    </style>
 </head>
 <body>
-    <h1>مرحباً بك يا أبو علي في لوحة تحكم "كرم"</h1>
-    
-    <button id="likeBtn">تفعيل اللايك التلقائي</button>
-    <p id="statusMsg"></p>
+    <h1>مرحباً بك في منصة "كرم"</h1>
+
+    <!-- قسم تسجيل الدخول -->
+    <div id="loginSection">
+        <h3>تسجيل الدخول</h3>
+        <input type="email" id="email" placeholder="البريد الإلكتروني"> <br>
+        <input type="password" id="password" placeholder="كلمة المرور"> <br>
+        <button onclick="login()">دخول</button>
+        <p id="loginError" style="color: red;"></p>
+    </div>
+
+    <!-- قسم لوحة التحكم (يظهر بعد الدخول) -->
+    <div id="dashboardSection">
+        <h2 id="welcomeMsg"></h2>
+        <button id="likeBtn" onclick="toggleLike()">تفعيل اللايك التلقائي</button>
+        <p id="statusMsg"></p>
+    </div>
 
     <script>
-        // الرابط السحابي الخاص بسيرفرك
         const API_BASE = 'https://karam-server.onrender.com';
+        let currentUserId = null;
 
-        document.getElementById('likeBtn').addEventListener('click', async () => {
-            const status = document.getElementById('statusMsg');
-            status.innerText = "جاري الاتصال بالسيرفر...";
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorP = document.getElementById('loginError');
 
             try {
-                // إرسال طلب تفعيل للسيرفر
-                const response = await fetch(`${API_BASE}/api/dashboard/settings`, {
+                const res = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    currentUserId = data.userId; // هنا يتم جلب الـ ID الحقيقي من قاعدة البيانات
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('dashboardSection').style.display = 'block';
+                    document.getElementById('welcomeMsg').innerText = "مرحباً بك يا " + data.username + " في لوحة تحكم كرم";
+                } else {
+                    errorP.innerText = data.error;
+                }
+            } catch (err) {
+                errorP.innerText = "⚠️ فشل الاتصال بالسيرفر";
+            }
+        }
+
+        async function toggleLike() {
+            const status = document.getElementById('statusMsg');
+            status.innerText = "جاري التحديث...";
+
+            try {
+                const res = await fetch(`${API_BASE}/api/dashboard/settings`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ 
-                        userId: "USER_ID_HERE", // هنا ستضع معرف المستخدم الحقيقي
+                        userId: currentUserId, // استخدام الـ ID الحقيقي الذي حصلنا عليه عند الدخول
                         autoLikeEnabled: true 
                     })
                 });
-
-                const data = await response.json();
-                
+                const data = await res.json();
                 if (data.success) {
-                    status.innerText = "✅ تم تفعيل اللايك بنجاح!";
+                    status.innerText = "✅ تم تحديث الإعدادات بنجاح!";
+                    status.style.color = "green";
                 } else {
-                    status.innerText = "❌ فشل التفعيل: " + data.error;
+                    status.innerText = "❌ فشل التحديث: " + data.error;
+                    status.style.color = "red";
                 }
             } catch (err) {
-                status.innerText = "⚠️ خطأ في الاتصال بالخادم، تأكد من عمل السيرفر.";
+                status.innerText = "⚠️ خطأ في الاتصال";
             }
-        });
+        }
     </script>
 </body>
 </html>
