@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path'); // مكتبة معالجة المسارات في النظام
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -9,12 +9,14 @@ app.use(express.json());
 app.use(cors());
 
 // ==========================================
-// 1. هيكل بيانات المستخدم (Schema)
+// 1. هيكل بيانات المستخدم المطوّر (Schema)
 // ==========================================
 const userSchema = new mongoose.Schema({
     username: String,
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    pageId: { type: String, default: "" },          // معرف صفحة الفيسبوك للزبون
+    pageAccessToken: { type: String, default: "" }, // مفتاح الوصول الخاص بالصفحة
     botSettings: { 
         autoLikeEnabled: { type: Boolean, default: false },
         autoCommentEnabled: { type: Boolean, default: false }
@@ -23,85 +25,70 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 // ==========================================
-// 2. مسارات الـ API للربط مع الواجهة
+// 2. مسارات الـ API للربط والتحكم
 // ==========================================
 
-// مسار تسجيل الدخول (Login)
+// مسار تسجيل الدخول والإنشاء التلقائي الآمن
 app.post('/api/auth/login', async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, username, isRegistering } = req.body;
     try {
+        if (isRegistering) {
+            const newUser = new User({ username, email, password });
+            await newUser.save();
+            return res.json({ success: true });
+        }
+
         const user = await User.findOne({ email, password });
         if (!user) return res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
         
-        // إرجاع بيانات المستخدم بنجاح للواجهة
-        res.json({ success: true, userId: user._id, username: user.username });
+        // إرجاع كافة بيانات العميل الحالية للواجهة
+        res.json({ 
+            success: true, 
+            userId: user._id, 
+            username: user.username,
+            pageId: user.pageId,
+            pageAccessToken: user.pageAccessToken,
+            botSettings: user.botSettings
+        });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
 });
 
-// مسار تحديث إعدادات البوت (Settings)
+// مسار تحديث إعدادات البوت والربط المستقل للزبون
 app.put('/api/dashboard/settings', async (req, res) => {
-    const { userId, autoLikeEnabled } = req.body;
+    const { userId, autoLikeEnabled, autoCommentEnabled, pageId, pageAccessToken } = req.body;
     try {
-        const user = await User.findByIdAndUpdate(
-            userId, 
-            { 'botSettings.autoLikeEnabled': autoLikeEnabled }, 
-            { new: true }
-        );
+        // تحديث البيانات ديناميكياً حسب ما يرسله العميل من الواجهة
+        const updateData = {};
+        if (autoLikeEnabled !== undefined) updateData['botSettings.autoLikeEnabled'] = autoLikeEnabled;
+        if (autoCommentEnabled !== undefined) updateData['botSettings.autoCommentEnabled'] = autoCommentEnabled;
+        if (pageId !== undefined) updateData.pageId = pageId;
+        if (pageAccessToken !== undefined) updateData.pageAccessToken = pageAccessToken;
+
+        const user = await User.findByIdAndUpdate(userId, updateData, { new: true });
         if (!user) return res.status(404).json({ error: "المستخدم غير موجود" });
         
-        res.json({ success: true, botSettings: user.botSettings });
+        res.json({ 
+            success: true, 
+            botSettings: user.botSettings,
+            pageId: user.pageId,
+            pageAccessToken: user.pageAccessToken
+        });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
 });
 
 // ==========================================
-// 3. توجيه السيرفر لعرض الواجهة من مجلد public الجديد
+// 3. توجيه السيرفر لعرض الواجهة الأمامية
 // ==========================================
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-// ==========================================
-// 4. مسارات Meta Webhook (التحقق والاستقبال)
-// ==========================================
 
-// رمز تحقق سري من اختيارك لربطه بـ Meta Developers
-const VERIFY_TOKEN = 'KaramToken2026';
-
-// مسار التحقق (GET) الذي يطلبه فيسبوك عند الربط لأول مرة
-app.get('/webhook', (req, res) => {
-    const mode = req.query['hub.mode'];
-    const token = req.query['hub.verify_token'];
-    const challenge = req.query['hub.challenge'];
-
-    if (mode && token) {
-        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-            console.log('✅ تم التحقق من الـ Webhook بنجاح بواسطة Meta');
-            return res.status(200).send(challenge);
-        } else {
-            return res.sendStatus(403);
-        }
-    }
-});
-
-// مسار استقبال البيانات الحية (POST) عند حدوث تعليق أو رسالة
-app.post('/webhook', (req, res) => {
-    const body = req.body;
-
-    if (body.object === 'page') {
-        // هنا ستصل تفاصيل التعليقات والرسائل الحية
-        console.log('📩 تفاصيل الحدث القادم من فيسبوك:', JSON.stringify(body, null, 2));
-        
-        // إشعار فيسبوك باستلام البيانات بنجاح لكي لا يكرر إرسالها
-        res.status(200).send('EVENT_RECEIVED');
-    } else {
-        res.sendStatus(404);
-    }
-});
 const PORT = process.env.PORT || 3000;
 
 // الاتصال بقاعدة البيانات ثم تشغيل السيرفر
