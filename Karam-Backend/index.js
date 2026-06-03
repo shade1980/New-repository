@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path'); // إضافة مكتبة المسارات للتعرف على ملف الـ html
+const path = require('path'); // مكتبة معالجة المسارات في النظام
 require('dotenv').config();
 
 const app = express();
@@ -58,9 +58,8 @@ app.put('/api/dashboard/settings', async (req, res) => {
 });
 
 // ==========================================
-// 3. الربط وتوجيه السيرفر لعرض الواجهة الأمامية تلقائياً
+// 3. توجيه السيرفر لعرض الواجهة من مجلد public الجديد
 // ==========================================
-// السيرفر سيقرأ ملف الـ index.html من مجلد اسمه public
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
